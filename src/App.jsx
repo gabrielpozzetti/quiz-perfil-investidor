@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import LeadGate from "./LeadGate.jsx";
+import { readUnlocked } from "./leads.js";
 
 const GOLD = "#C9A84C";
 const NAVY = "#0D1B2A";
@@ -204,6 +206,7 @@ export default function App() {
   const [selected, setSelected] = useState(null);
   const [animating, setAnimating] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [lead, setLead] = useState(() => readUnlocked("quiz-perfil"));
 
   const handleAnswer = (score) => {
     setSelected(score);
@@ -214,8 +217,12 @@ export default function App() {
       setSelected(null);
       setAnimating(false);
       if (current + 1 >= QUESTIONS.length) {
-        setScreen("result");
-        setTimeout(() => setShowResult(true), 300);
+        if (lead) {
+          setScreen("result");
+          setTimeout(() => setShowResult(true), 300);
+        } else {
+          setScreen("lead");
+        }
       } else {
         setCurrent(current + 1);
       }
@@ -234,7 +241,7 @@ export default function App() {
   };
 
   const waMsg = encodeURIComponent(
-    `Olá Gabriel! Fiz o Quiz de Perfil de Investidor e quero entender melhor meu resultado.\n\n` +
+    `Olá Gabriel! ${lead ? `Aqui é ${lead.nome}. ` : ""}Fiz o Quiz de Perfil de Investidor e quero entender melhor meu resultado.\n\n` +
     `🎯 Meu perfil: ${profile.name}\n` +
     `📊 Pontuação: ${totalScore}/32\n\n` +
     `Respostas:\n` +
@@ -360,6 +367,23 @@ export default function App() {
           </div>
         )}
 
+        {/* ═══ FORMULÁRIO ═══ */}
+        {screen === "lead" && (
+          <div className="fade-in">
+            <LeadGate
+              ferramenta="quiz-perfil"
+              titulo="Informe seu nome e WhatsApp para ver seu perfil de investidor."
+              subtitulo="Você recebe seu perfil, suas características e a alocação sugerida para ele."
+              getResultado={() => ({ perfil: profile.name, pontuacao: totalScore, respostas: answers })}
+              onUnlock={(nome) => {
+                setLead({ nome });
+                setScreen("result");
+                setTimeout(() => setShowResult(true), 300);
+              }}
+            />
+          </div>
+        )}
+
         {/* ═══ RESULT ═══ */}
         {screen === "result" && (
           <div style={{ opacity: showResult ? 1 : 0, transform: showResult ? "translateY(0)" : "translateY(20px)", transition: "all 0.6s ease" }}>
@@ -475,7 +499,7 @@ export default function App() {
                 Seu resultado do quiz já vai junto na mensagem
               </div>
               <div style={{ borderTop: "1px solid #ffffff15", marginTop: "0.8rem", paddingTop: "0.8rem", display: "flex", justifyContent: "center", gap: "1.5rem" }}>
-                <a href="https://www.instagram.com/gabrielinveste" target="_blank" rel="noopener noreferrer"
+                <a href="https://www.instagram.com/gabrielinveste_" target="_blank" rel="noopener noreferrer"
                   style={{ fontSize: "0.72rem", color: GOLD, textDecoration: "none", fontWeight: 600 }}>📸 Instagram</a>
                 <span onClick={restart} style={{ fontSize: "0.72rem", color: "#9CA3AF", cursor: "pointer", fontWeight: 600 }}>🔄 Refazer quiz</span>
               </div>
